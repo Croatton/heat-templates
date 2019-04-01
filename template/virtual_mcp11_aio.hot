@@ -68,7 +68,7 @@ parameters:
     default: nightly
   cfg_reclass_system_branch:
     type: string
-    default: ""
+    default: master
   cfg_bootstrap_extra_repo_params:
     type: string
     default: ''
