@@ -16,6 +16,7 @@ export BOOTSTRAP_SCRIPT_URL=${BOOTSTRAP_SCRIPT_URL:-https://gerrit.mcp.mirantis.
 # inherit heat variables
 export RECLASS_ADDRESS=$reclass_address
 export RECLASS_BRANCH=$reclass_branch
+export RECLASS_SYSTEM_BRANCH="$reclass_system_branch"
 export RECLASS_ROOT=$reclass_root
 export CLUSTER_NAME=$cluster_name
 export HOSTNAME=$node_hostname
