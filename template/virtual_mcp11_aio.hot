@@ -120,7 +120,6 @@ resources:
       instance_config_host: 127.0.0.1
       cfg_bootstrap_extra_repo_params: { get_param: cfg_bootstrap_extra_repo_params }
       cfg_formula_pkg_revision: { get_param: cfg_formula_pkg_revision }
-      cfg_reclass_system_branch: { get_param: cfg_reclass_system_branch }
       cfg_saltversion: { get_param: cfg_saltversion }
       instance_cloud_init:
         str_replace:
