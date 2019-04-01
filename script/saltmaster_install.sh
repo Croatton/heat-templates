@@ -16,7 +16,7 @@ export BOOTSTRAP_SCRIPT_URL=${BOOTSTRAP_SCRIPT_URL:-https://gerrit.mcp.mirantis.
 # inherit heat variables
 export RECLASS_ADDRESS=$reclass_address
 export RECLASS_BRANCH=$reclass_branch
-export RECLASS_SYSTEM_BRANCH="$reclass_system_branch"
+export RECLASS_SYSTEM_BRANCH=$reclass_system_branch
 export RECLASS_ROOT=$reclass_root
 export CLUSTER_NAME=$cluster_name
 export HOSTNAME=$node_hostname
@@ -27,6 +27,7 @@ export EXTRA_FORMULAS="$extra_formulas"
 export RECLASS_BRANCH=${RECLASS_BRANCH:-master}
 export RECLASS_ROOT=${RECLASS_ROOT:-/srv/salt/reclass}
 export DISTRIB_REVISION=${DISTRIB_REVISION:-nightly}
+export RECLASS_SYSTEM_BRANCH=${RECLASS_SYSTEM_BRANCH:-""}
 #export DEBUG=${DEBUG:-1}
 export BOOTSTRAP_SALTSTACK_VERSION="$saltversion"
 
