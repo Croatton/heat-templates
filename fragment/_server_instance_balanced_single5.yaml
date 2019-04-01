@@ -1,0 +1,190 @@
+heat_template_version: 2015-10-15
+
+description: Single loadbalanced server instance fragment
+
+parameters:
+  key_pair:
+    type: string
+  network:
+    type: string
+  security_group:
+    type: string
+  network01_prefix:
+    type: string
+  network02_prefix:
+    type: string
+  network03_prefix:
+    type: string
+  network04_prefix:
+    type: string
+  network05_prefix:
+    type: string
+  network01_vip_address:
+    type: json
+    default: []
+  network02_vip_address:
+    type: json
+    default: []
+  network03_vip_address:
+    type: json
+    default: []
+  network04_vip_address:
+    type: json
+    default: []
+  network05_vip_address:
+    type: json
+    default: []
+  instance_name:
+    type: string
+  instance_domain:
+    type: string
+  instance_cluster:
+    type: string
+  instance_zone:
+    type: string
+  instance_os:
+    type: string
+  instance_flavor:
+    type: string
+  instance_image:
+    type: string
+  instance_public_net:
+    type: string
+    default: public
+  instance_boot_timeout:
+    type: number
+    default: 3600
+  instance_config_host:
+    type: string
+  instance_cloud_init:
+    type: string
+    default: ""
+  pool:
+    type: string
+  vip_host_port:
+    type: string
+    default: 6443
+  network01_subnet:
+    type: string
+  cfg_saltversion:
+    type: string
+    default: "stable 2016.3"
+
+resources:
+  instance_port01:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net01']] }
+      allowed_address_pairs: { get_param: network01_vip_address }
+      security_groups:
+      - default
+      - { get_param: security_group }
+  instance_port02:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net02']] }
+      allowed_address_pairs: { get_param: network02_vip_address }
+      security_groups:
+      - default
+      - { get_param: security_group }
+  instance_port03:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net03']] }
+      allowed_address_pairs: { get_param: network03_vip_address }
+      security_groups:
+      - default
+      - { get_param: security_group }
+  instance_port04:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net04']] }
+      allowed_address_pairs: { get_param: network04_vip_address }
+      security_groups:
+      - default
+      - { get_param: security_group }
+  instance_port05:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net05']] }
+      allowed_address_pairs: { get_param: network05_vip_address }
+      security_groups:
+      - default
+      - { get_param: security_group }
+  instance_wait_handle:
+    type: OS::Heat::WaitConditionHandle
+  instance_wait_condition:
+    type: OS::Heat::WaitCondition
+    depends_on: instance_instance
+    properties:
+      handle: { get_resource: instance_wait_handle }
+      timeout: { get_param: instance_boot_timeout }
+  instance_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: instance_image }
+      image_update_policy: REBUILD
+      flavor: { get_param: instance_flavor }
+      name:
+        list_join:
+        - '.'
+        - [ { get_param: instance_name }, { get_param: instance_domain } ]
+      availability_zone: { get_param: instance_zone }
+      key_name: { get_param: key_pair }
+      networks:
+      - port: { get_resource: instance_port01 }
+      - port: { get_resource: instance_port02 }
+      - port: { get_resource: instance_port03 }
+      - port: { get_resource: instance_port04 }
+      - port: { get_resource: instance_port05 }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: { get_file: ../script/instance_boot.sh }
+          params:
+            $node_os: { get_param: instance_os }
+            $node_hostname: { get_param: instance_name }
+            $node_domain: { get_param: instance_domain }
+            $cluster_name: { get_param: instance_cluster }
+            $config_host: { get_param: instance_config_host }
+            $network01_prefix: { get_param: network01_prefix }
+            $network02_prefix: { get_param: network02_prefix }
+            $network03_prefix: { get_param: network03_prefix }
+            $network04_prefix: { get_param: network04_prefix }
+            $network05_prefix: { get_param: network05_prefix }
+            $instance_cloud_init: { get_param: instance_cloud_init }
+            $wait_condition_notify: { get_attr: [ instance_wait_handle, curl_cli ] }
+            $saltversion: { get_param: cfg_saltversion }
+  floating_ip:
+    type: OS::Nova::FloatingIP
+    properties:
+      pool: { get_param: instance_public_net }
+  floating_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: floating_ip }
+      server_id: { get_resource: instance_instance }
+  pool_member:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: { get_param: pool }
+      address: { get_attr: [instance_instance, addresses, { list_join: [ '-', [ get_param: network, 'net01'] ] }, 0 , addr] }
+      protocol_port: { get_param: vip_host_port }
+      subnet: { get_param:  network01_subnet }
+outputs:
+  instance_address:
+    value:
+      get_attr:
+      - instance_instance
+      - addresses
+      - { list_join: [ '-', [ get_param: network, 'net01'] ] }
+      - 0
+      - addr
+    description: "Instance's private IP address"
+  instance_public_address:
+    value: { get_attr: [floating_ip, ip] }
+    description: "Instance's public IP address"
+  instance:
+    value: { get_resource: instance_instance }
+    description: "Instance"
+

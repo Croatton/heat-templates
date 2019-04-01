@@ -1,0 +1,32 @@
+heat_template_version: 2017-02-24
+
+description: Router
+
+parameters:
+  stack_name:
+    type: string
+  key_value:
+    type: string
+  public_net:
+    type: string
+    description: ID or name of public network for which router will be allocated.
+  private_net:
+    type: string
+    description: ID or name of private network for which router will be allocated.
+
+
+resources:
+  router01:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+            network: { get_param: public_net }
+  router01_interface:
+        type: OS::Neutron::RouterInterface
+        properties:
+          router_id: { get_resource: router01 }
+          subnet_id: { get_param: private_net }
+
+outputs:
+  router:
+    value: { get_param: stack_name }

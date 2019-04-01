@@ -1,0 +1,110 @@
+heat_template_version: 2015-10-15
+
+description: Single service instance fragment [unmanaged]
+
+parameters:
+  key_pair:
+    type: string
+  network:
+    type: string
+  security_group:
+    type: string
+  network01_prefix:
+    type: string
+  network02_prefix:
+    type: string
+  network03_prefix:
+    type: string
+  network04_prefix:
+    type: string
+  network05_prefix:
+    type: string
+  instance_name:
+    type: string
+  instance_domain:
+    type: string
+  instance_cluster:
+    type: string
+  instance_zone:
+    type: string
+  instance_flavor:
+    type: string
+  instance_image:
+    type: string
+  instance_cloud_init:
+    type: string
+    default: ""
+  cfg_saltversion:
+    type: string
+    default: 'stable 2017.7'
+
+resources:
+  instance_port01:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net01']] }
+      fixed_ips:
+        - ip_address: { list_join: ['.', [get_param: network01_prefix, '131']] }
+      security_groups:
+        - default
+        - { get_param: security_group }
+  instance_port02:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net02']] }
+      fixed_ips:
+        - ip_address: { list_join: ['.', [get_param: network02_prefix, '131']] }
+      security_groups:
+        - default
+        - { get_param: security_group }
+  instance_port03:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net03']] }
+      fixed_ips:
+        - ip_address: { list_join: ['.', [get_param: network03_prefix, '131']] }
+      security_groups:
+        - default
+        - { get_param: security_group }
+  instance_port04:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net04']] }
+      fixed_ips:
+        - ip_address: { list_join: ['.', [get_param: network04_prefix, '131']] }
+      security_groups:
+        - default
+        - { get_param: security_group }
+  instance_port05:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { list_join: ['-', [get_param: network, 'net05']] }
+      fixed_ips:
+        - ip_address: { list_join: ['.', [get_param: network05_prefix, '131']] }
+      security_groups:
+        - default
+        - { get_param: security_group }
+  instance_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: instance_image }
+      image_update_policy: REBUILD
+      flavor: { get_param: instance_flavor }
+      name:
+        list_join:
+        - '.'
+        - [ { get_param: instance_name }, { get_param: instance_domain } ]
+      availability_zone: { get_param: instance_zone }
+      key_name: { get_param: key_pair }
+      networks:
+      - port: { get_resource: instance_port01 }
+      - port: { get_resource: instance_port02 }
+      - port: { get_resource: instance_port03 }
+      - port: { get_resource: instance_port04 }
+outputs:
+  instance_address:
+    value: { get_attr: [instance_instance, first_address] }
+    description: "Instance's private IP address"
+  instance:
+    value: { get_resource: instance_instance }
+    description: "Instance"

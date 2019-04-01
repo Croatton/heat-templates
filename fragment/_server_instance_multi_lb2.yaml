@@ -1,0 +1,189 @@
+heat_template_version: 2015-10-15
+
+description: 3 single loadbalanced nodes fragment
+
+parameters:
+  key_pair:
+    type: string
+  network:
+    type: string
+  security_group:
+    type: string
+  network01_prefix:
+    type: string
+  network02_prefix:
+    type: string
+
+  network01_vip_address:
+    type: json
+    default: []
+  network02_vip_address:
+    type: json
+    default: []
+
+  instance01_name:
+    type: string
+  instance02_name:
+    type: string
+  instance03_name:
+    type: string
+  instance_domain:
+    type: string
+  instance_cluster:
+    type: string
+  instance_zone:
+    type: string
+  instance_os:
+    type: string
+  instance_flavor:
+    type: string
+  instance_image:
+    type: string
+  instance_boot_timeout:
+    type: number
+    default: 3600
+  instance_config_host:
+    type: string
+  instance_cloud_init:
+    type: string
+    default: ""
+  public_vip_name:
+    type: string
+  vip_host_port:
+    description: "Instance host port to connect to"
+    default: "6443"
+    type: string
+  vip_listener_port:
+    description: "Port that the LBaaS LB should listen on"
+    default: "443"
+    type: string
+  network01_subnet:
+    type: string
+  instance_public_net:
+    default: "public"
+    type: string
+  cfg_saltversion:
+    type: string
+    default: "stable 2016.3"
+
+resources:
+  instance01:
+    type: MCP::SingleBalancedInstance
+    properties:
+      key_pair: { get_param: key_pair }
+      network: { get_param: network }
+      security_group: { get_param: security_group }
+      network01_prefix: { get_param: network01_prefix }
+      network02_prefix: { get_param: network02_prefix }
+
+      network01_vip_address: { get_param: network01_vip_address }
+      network02_vip_address: { get_param: network02_vip_address }
+
+      instance_name: { get_param: instance01_name }
+      instance_domain: { get_param: instance_domain }
+      instance_cluster: { get_param: instance_cluster }
+      instance_zone:  { get_param: instance_zone }
+      instance_os: { get_param: instance_os }
+      instance_flavor: { get_param: instance_flavor }
+      instance_image: { get_param: instance_image }
+      instance_boot_timeout: { get_param: instance_boot_timeout }
+      instance_config_host: { get_param: instance_config_host }
+      instance_cloud_init: { get_param: instance_cloud_init }
+      pool: { get_resource: pool }
+      vip_host_port: { get_param: vip_host_port }
+      network01_subnet: { get_param: network01_subnet }
+      cfg_saltversion: { get_param: cfg_saltversion }
+  instance02:
+    type: MCP::SingleBalancedInstance
+    properties:
+      key_pair: { get_param: key_pair }
+      network: { get_param: network }
+      security_group: { get_param: security_group }
+      network01_prefix: { get_param: network01_prefix }
+      network02_prefix: { get_param: network02_prefix }
+
+      network01_vip_address: { get_param: network01_vip_address }
+      network02_vip_address: { get_param: network02_vip_address }
+
+      instance_name: { get_param: instance02_name }
+      instance_domain: { get_param: instance_domain }
+      instance_cluster: { get_param: instance_cluster }
+      instance_zone:  { get_param: instance_zone }
+      instance_os: { get_param: instance_os }
+      instance_flavor: { get_param: instance_flavor }
+      instance_image: { get_param: instance_image }
+      instance_boot_timeout: { get_param: instance_boot_timeout }
+      instance_config_host: { get_param: instance_config_host }
+      instance_cloud_init: { get_param: instance_cloud_init }
+      pool: { get_resource: pool }
+      vip_host_port: { get_param: vip_host_port }
+      network01_subnet: { get_param: network01_subnet }
+      cfg_saltversion: { get_param: cfg_saltversion }
+  instance03:
+    type: MCP::SingleBalancedInstance
+    properties:
+      key_pair: { get_param: key_pair }
+      network: { get_param: network }
+      security_group: { get_param: security_group }
+      network01_prefix: { get_param: network01_prefix }
+      network02_prefix: { get_param: network02_prefix }
+
+      network01_vip_address: { get_param: network01_vip_address }
+      network02_vip_address: { get_param: network02_vip_address }
+
+      instance_name: { get_param: instance03_name }
+      instance_domain: { get_param: instance_domain }
+      instance_cluster: { get_param: instance_cluster }
+      instance_zone:  { get_param: instance_zone }
+      instance_os: { get_param: instance_os }
+      instance_flavor: { get_param: instance_flavor }
+      instance_image: { get_param: instance_image }
+      instance_boot_timeout: { get_param: instance_boot_timeout }
+      instance_config_host: { get_param: instance_config_host }
+      instance_cloud_init: { get_param: instance_cloud_init }
+      pool: { get_resource: pool }
+      vip_host_port: { get_param: vip_host_port }
+      network01_subnet: { get_param: network01_subnet }
+      cfg_saltversion: { get_param: cfg_saltversion }
+  pool:
+    type: OS::Neutron::LBaaS::Pool
+    properties:
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTPS
+      listener: { get_resource: listener }
+  monitor:
+    type: OS::Neutron::LBaaS::HealthMonitor
+    properties:
+      delay: 3
+      type: HTTPS
+      timeout: 5
+      max_retries: 3
+      pool: { get_resource: pool }
+      expected_codes: "200,202,401"
+      url_path: "/api/v1"
+  listener:
+    type: OS::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: { get_resource: loadbalancer }
+      protocol: HTTPS
+      protocol_port: { get_param: vip_listener_port }
+  loadbalancer:
+    type: OS::Neutron::LBaaS::LoadBalancer
+    properties:
+      name: { get_param: public_vip_name }
+      vip_subnet: { get_param: network01_subnet}
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: instance_public_net }
+      port_id: { get_attr: [loadbalancer, vip_port_id ]}
+
+outputs:
+  kube_vip_public:
+    value:
+      str_replace:
+        template: https://IP_ADDRESS:PORT
+        params:
+          IP_ADDRESS: { get_attr: [ floating_ip, floating_ip_address ] }
+          PORT: { get_param: vip_listener_port }
+    description: "Public IP address of Kubernetes VIP"

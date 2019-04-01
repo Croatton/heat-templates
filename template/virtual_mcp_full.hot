@@ -1,0 +1,439 @@
+heat_template_version: 2017-02-24
+
+parameters:
+
+  cluster_public_key:
+    type: string
+  cluster_public_net:
+    type: string
+    description: ID or name of public network
+  cluster_zone:
+    type: string
+    default: nova
+  cluster_name:
+    type: string
+    default: virtual-mcp-full
+  cluster_domain:
+    type: string
+  cluster_nameservers:
+    type: comma_delimited_list
+    description: DNS nameservers to be assigned to nodes
+  cluster_node_count:
+    type: string
+    default: 1
+  glance_bootstrap_image:
+    type: string
+  cfg_reclass_address:
+    type: string
+    default: https://gerrit.mcp.mirantis.net/salt-models/mcp-virtual-lab
+  cfg_reclass_branch:
+    type: string
+    default: master
+  cfg_reclass_key:
+    type: string
+    hidden: true
+    default: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEAqdHr4zmivHPEimCuK9vtATe4PvGEr0Np/JxYDlEQsr5Cajh4
+      tajxmZrjdAnJWFXVbmYl21sN1cUW0ltxB+9+lc4GNVNCZqE4kmpsyx2lrF7xCFvF
+      Qou26JYud/UCT9IpCYgWjQIGSC8gq1TzfgOpn6rWnLNSl3WdM5TKtQT7RXIkdSUw
+      kXFbObz9lsM+ULWNozCId2osJHj4zE0D3H5odU5DpcWLuSG0MmdxtWoQNJjSiPWt
+      HbRdvNmr/xeqcAfzdUdZxGf/VbXDdiNZn9TVv7UxxBHE812KNUf/Cvb5agDfEL7x
+      i2bWXbhr4jVTaDVr6MWl8Q7fAj79gdjQnUBWaQIDAQABAoIBAFU3kU6yIna9BViH
+      UX+S2ijtRBjZ68JjavEnp4xvo5h+nydcdT57q9lv/0nAi3g3gmXm/oJH+/ZU87HV
+      zy+zP+t+umDSChUkPBZFL5jxpKyN7BhMrP1KzRuEGYd6vJE/nfY5g095P5vDgnpX
+      o+SNg/YqrY1u8zgr/hnfRaV2/XyIDEEcQXTHseWTnnMQnULFU88xL8yq8ACT5GhK
+      7A9m5ukfcU6d/fs/psz5Yqw5IQsWbv1yJ3/FKufPHlo2Nzh3/3eDAZUXvaBgf1so
+      FWFpHtkry3OXOGaZ98HgF9hL0twS0pzMvuypdGUQAt6nyB1N5re4LK/MAOddqwEc
+      1+NQzfECgYEA2ryEf0GLJdtiYs3F4HbwTwJVIXdyWv7kjYGeMkutzzAjXl6wx8aq
+      kfqLJ7x7UkR5unZ1ajEbKBciAlSuFA+Gikn6a4Lv8h87aSnHpPd/2VSitRlI/gW7
+      w4U4CL3Br1JyonU5WA7VYfTow7KnHBhdwm27RMA9uosyIpveQRpqSG0CgYEAxsAS
+      wCQKrhuPq2YtGtFR7K4BL+N+0E1Vq6h49u1ukcgUe0GHVD3VzBypNCv7rWEVHzAg
+      biCVi7PCjzZYW4fYZmzVD4JbFLVGOUu7aJwLaE4wDe72DNr6YZhcS+Ta98BP+x0q
+      Wt34JNPDabRPfhXfhiCqnWjjod+4Zqx4VJVNgG0CgYB5EXL8xJhyAbW5Hk/x56Mm
+      +BGKjoR7HS3/rMiU6hJv5SMObrbGPI3YcqZm/gn8BO6jaEGg30E6tWMbiyc270j2
+      be/vZe/NQcAuevOHuX3IGvJb7nzaLO46UBgtrmnv0mCkzuFIfh1ZNKdI+i9Ie6wZ
+      m4bVjNod0EGVqlQgELDXGQKBgB+NNmzSS++/6FrpaZesSzkrlnynvOYMoOETacCp
+      iLgT70xx5q308w/oLORfZyDrHJNK7JsPCS6YZvadRgGh2zTHajuAEj2DWZaW8zV0
+      MEtqvi44FU+NI9qCeYSC3FAgc5IF20d5nX8bLxaEzWnSxx1f6jX7BMgZ4AhMsP2c
+      hiUxAoGAFaxn+t9blIjqUiuh0smSYFhLBVPZveYHQDmQYERjktptBd3X95fGnSKh
+      iDe2iPGyud2+Yu4X/VjHLh/MRru+ZXvPXw1XwEqX93q8a1n283ul0Rl9+KKKOVHR
+      eecTjI/BfXBf33mPRKny3xuHw6uwta2T3OXky9IhqYS1kkHiZWA=
+      -----END RSA PRIVATE KEY-----
+  cfg_formula_branch:
+    type: string
+    default: master
+  cfg_formula_pkg_revision:
+    type: string
+    default: nightly
+  cfg_extra_formulas:
+    type: string
+    default: ""
+  cfg_saltversion:
+    type: string
+    default: 'stable 2017.7'
+  network01_dhcp:
+    type: boolean
+    default: true
+  install_stacklight:
+    type: boolean
+    default: false
+  install_contrail:
+    type: boolean
+    default: false
+
+conditions:
+  stacklight:
+    equals:
+    - get_param: install_stacklight
+    - yes
+  contrail:
+    equals:
+    - get_param: install_contrail
+    - yes
+  ovs:
+    not: contrail
+
+resources:
+  mcp_network:
+    type: MCP::Network5
+    properties:
+      stack_name: { get_param: "OS::stack_name" }
+      key_value: { get_param: cluster_public_key }
+      public_net: { get_param: cluster_public_net }
+      nameservers: { get_param: cluster_nameservers }
+      network01_pool_end: 192.168.10.100
+      network02_pool_start: 172.16.10.200
+      network02_pool_end: 172.16.10.220
+      network01_dhcp:  { get_param: network01_dhcp }
+  mcp_salt_master:
+    type: MCP::SingleInstanceVolume
+    depends_on: mcp_network
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      network01_static_ip:
+        list_join:
+        - '.'
+        - [ { get_attr: [mcp_network, network01_prefix] }, '15' ]
+      network02_static_ip:
+        list_join:
+        - '.'
+        - [ { get_attr: [mcp_network, network02_prefix] }, '15' ]
+      instance_name: cfg01
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: cfg01-day01-07022018-090531
+      glance_bootstrap_image: { get_param: glance_bootstrap_image }
+      instance_flavor: m1.xlarge100
+      instance_config_host: 127.0.0.1
+  mcp_os_control:
+    type: MCP::Multiple6Instances5
+    depends_on: mcp_salt_master
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      network02_vip_address:
+        - ip_address:
+              list_join:
+                - '.'
+                - [ { get_attr: [mcp_network, network02_prefix] }, '254' ]
+      instance01_name: kvm01
+      instance02_name: kvm02
+      instance03_name: kvm03
+      instance04_name: kvm04
+      instance05_name: kvm05
+      instance06_name: kvm06
+      instance01_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:01"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:02"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:05"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:0b"
+          ip_address: "192.168.10.0/24"
+      instance02_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:03"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:06"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:0c"
+          ip_address: "192.168.10.0/24"
+      instance03_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:04"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:07"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:19"
+          ip_address: "192.168.10.0/24"
+      instance01_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:01"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:02"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:05"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:0b"
+          ip_address: "172.16.10.0/24"
+      instance02_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:03"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:06"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:0c"
+          ip_address: "172.16.10.0/24"
+      instance03_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:04"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:07"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:19"
+          ip_address: "172.16.10.0/24"
+      instance04_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:08"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:0d"
+          ip_address: "192.168.10.0/24"
+      instance05_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:09"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:0e"
+          ip_address: "192.168.10.0/24"
+      instance06_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:0a"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:0f"
+          ip_address: "192.168.10.0/24"
+      instance04_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:08"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:0d"
+          ip_address: "172.16.10.0/24"
+      instance05_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:09"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:0e"
+          ip_address: "172.16.10.0/24"
+      instance06_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:0a"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:0f"
+          ip_address: "172.16.10.0/24"
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: ubuntu-16-04-x64-experimental-salt-2017-7-19042018-161708-201804191617
+      instance_flavor: m1.xxlarge80
+      instance_config_host: { get_attr: [mcp_salt_master, instance_address] }
+      instance_cloud_init: |
+        # todo
+
+  mcp_os_control_stacklight:
+    type: MCP::Multiple3Instances5
+    depends_on: mcp_salt_master
+    condition: stacklight
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      network02_vip_address:
+        - ip_address:
+              list_join:
+                - '.'
+                - [ { get_attr: [mcp_network, network02_prefix] }, '254' ]
+      instance01_name: kvm07
+      instance02_name: kvm08
+      instance03_name: kvm09
+      instance01_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:10"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:13"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:16"
+          ip_address: "192.168.10.0/24"
+      instance02_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:11"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:14"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:17"
+          ip_address: "192.168.10.0/24"
+      instance03_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:12"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:15"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:18"
+          ip_address: "192.168.10.0/24"
+      instance01_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:10"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:13"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:16"
+          ip_address: "172.16.10.0/24"
+      instance02_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:11"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:14"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:17"
+          ip_address: "172.16.10.0/24"
+      instance03_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:12"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:15"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:18"
+          ip_address: "172.16.10.0/24"
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: ubuntu-16-04-x64-experimental-salt-2017-7-19042018-161708-201804191617
+      instance_flavor: m1.xxlarge80
+      instance_config_host: { get_attr: [mcp_salt_master, instance_address] }
+      instance_cloud_init: |
+        # todo
+
+  mcp_os_control_contrail:
+    type: MCP::Multiple3Instances5
+    depends_on: mcp_salt_master
+    condition: contrail
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      network02_vip_address:
+        - ip_address:
+              list_join:
+                - '.'
+                - [ { get_attr: [mcp_network, network02_prefix] }, '254' ]
+      instance01_name: kvm10
+      instance02_name: kvm11
+      instance03_name: kvm12
+      instance01_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:20"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:23"
+          ip_address: "192.168.10.0/24"
+      instance02_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:21"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:24"
+          ip_address: "192.168.10.0/24"
+      instance03_network01_port_address_pair:
+        - mac_address: "ac:de:48:aa:aa:22"
+          ip_address: "192.168.10.0/24"
+        - mac_address: "ac:de:48:aa:aa:25"
+          ip_address: "192.168.10.0/24"
+      instance01_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:20"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:23"
+          ip_address: "172.16.10.0/24"
+      instance02_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:21"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:24"
+          ip_address: "172.16.10.0/24"
+      instance03_network02_port_address_pair:
+        - mac_address: "ac:de:48:aa:ab:22"
+          ip_address: "172.16.10.0/24"
+        - mac_address: "ac:de:48:aa:ab:25"
+          ip_address: "172.16.10.0/24"
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: ubuntu-16-04-x64-experimental-salt-2017-7-19042018-161708-201804191617
+      instance_flavor: m1.xxlarge80
+      instance_config_host: { get_attr: [mcp_salt_master, instance_address] }
+      instance_cloud_init: |
+        # todo
+
+  mcp_os_gateway:
+    type: MCP::SingleInstance5
+    condition: ovs
+    depends_on: mcp_os_control
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      instance_name: gtw01
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: ubuntu-16-04-x64-experimental-salt-2017-7-19042018-161708-201804191617
+      instance_flavor: m1.large40
+      instance_config_host: { get_attr: [mcp_salt_master, instance_address] }
+      instance_cloud_init: |
+        # todo
+  mcp_os_compute:
+    type: MCP::StaticCluster5
+    depends_on: mcp_os_control
+    properties:
+      cfg_saltversion: { get_param: cfg_saltversion }
+      key_pair: { get_param: "OS::stack_name" }
+      network: { get_attr: [mcp_network, network] }
+      security_group: { get_attr: [mcp_network, security_group] }
+      network01_prefix: { get_attr: [mcp_network, network01_prefix] }
+      network02_prefix: { get_attr: [mcp_network, network02_prefix] }
+      network03_prefix: { get_attr: [mcp_network, network03_prefix] }
+      network04_prefix: { get_attr: [mcp_network, network04_prefix] }
+      network05_prefix: { get_attr: [mcp_network, network05_prefix] }
+      instance_name: cmp
+      instance_count: { get_param: cluster_node_count }
+      instance_domain: { get_param: cluster_domain }
+      instance_cluster: { get_param: cluster_name }
+      instance_zone: { get_param: cluster_zone }
+      instance_os: xenial
+      instance_image: ubuntu-16-04-x64-experimental-salt-2017-7-19042018-161708-201804191617
+      instance_flavor: m1.large40
+      instance_config_host: { get_attr: [mcp_salt_master, instance_address] }
+      instance_cloud_init: |
+        # todo
+
+
+outputs:
+  salt_master_ip:
+    value: { get_attr: [mcp_salt_master, instance_public_address] }
+    description: "Public IP address of the Salt master node"
+

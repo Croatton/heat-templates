@@ -1,0 +1,79 @@
+heat_template_version: 2015-10-15
+
+description: Static server cluster (N nodes) fragment with volumes
+
+parameters:
+  key_pair:
+    type: string
+  network:
+    type: string
+  security_group:
+    type: string
+  network01_prefix:
+    type: string
+  network02_prefix:
+    type: string
+  network03_prefix:
+    type: string
+  network04_prefix:
+    type: string
+  network05_prefix:
+    type: string
+  instance_count:
+    type: string
+  instance_name:
+    type: string
+  instance_domain:
+    type: string
+  instance_cluster:
+    type: string
+  instance_zone:
+    type: string
+  instance_os:
+    type: string
+  instance_flavor:
+    type: string
+  instance_image:
+    type: string
+  instance_boot_timeout:
+    type: number
+    default: 3600
+  instance_config_host:
+    type: string
+  instance_cloud_init:
+    type: string
+    default: ""
+  cfg_saltversion:
+    type: string
+    default: "stable 2016.3"
+
+resources:
+  server_scale_static:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: instance_count }
+      resource_def:
+        type: MCP::StaticClusterMemberVolumes5
+        properties:
+          cfg_saltversion: { get_param: cfg_saltversion }
+          key_pair: { get_param: key_pair }
+          network: { get_param: network }
+          security_group: { get_param: security_group }
+          network01_prefix: { get_param: network01_prefix }
+          network02_prefix: { get_param: network02_prefix }
+          network03_prefix: { get_param: network03_prefix }
+          network04_prefix: { get_param: network04_prefix }
+          network05_prefix: { get_param: network05_prefix }
+          instance_name: { list_join: ['', [
+            { get_param: instance_name },
+            "%index%"
+          ]]}
+          instance_domain: { get_param: instance_domain }
+          instance_cluster: { get_param: instance_cluster }
+          instance_zone:  { get_param: instance_zone }
+          instance_os: { get_param: instance_os }
+          instance_flavor: { get_param: instance_flavor }
+          instance_image: { get_param: instance_image }
+          instance_boot_timeout: { get_param: instance_boot_timeout }
+          instance_config_host: { get_param: instance_config_host }
+          instance_cloud_init: { get_param: instance_cloud_init }

@@ -1,0 +1,233 @@
+heat_template_version: 2017-02-24
+
+description: Network fragment
+
+parameters:
+  stack_name:
+    type: string
+  key_value:
+    type: string
+  public_net:
+    type: string
+    description: ID or name of public network for which router will be allocated.
+  nameservers:
+    type: comma_delimited_list
+  network01_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 192.168.10.0/24
+  network01_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 192.168.10.90
+  network01_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 192.168.10.200
+  network01_dhcp:
+    type: boolean
+    description: Enable/Disable dhcp in network1
+    default: true
+  network02_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 172.16.10.0/24
+  network02_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 172.16.10.90
+  network02_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 172.16.10.200
+  network03_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 10.1.0.0/24
+  network03_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 10.1.0.90
+  network03_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 10.1.0.200
+  network04_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 10.16.0.0/24
+  network04_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 10.16.0.90
+  network04_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 10.16.0.200
+  network05_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 192.168.90.0/24
+  network05_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 192.168.90.90
+  network05_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 192.168.90.200
+  network_port_security_enabled:
+    type: boolean
+    description: enable/disable port security on networks
+    default: true
+
+conditions:
+  cond_network_port_security:
+    equals:
+      - get_param: network_port_security_enabled
+      - true
+
+resources:
+  key_pair:
+    type: OS::Nova::KeyPair
+    properties:
+      name: { get_param: stack_name }
+      public_key: { get_param: key_value }
+      save_private_key: false
+  network01:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net01']] }
+      port_security_enabled: { get_param: network_port_security_enabled }
+  subnet01:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net01']] }
+      network: { get_resource: network01 }
+      cidr: { get_param: network01_cidr }
+      enable_dhcp: { get_param: network01_dhcp }
+      dns_nameservers: { get_param: nameservers }
+      allocation_pools:
+        - start: { get_param: network01_pool_start }
+          end: { get_param: network01_pool_end }
+  network02:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net02']] }
+      port_security_enabled: { get_param: network_port_security_enabled }
+  subnet02:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net02']] }
+      network: { get_resource: network02 }
+      cidr: { get_param: network02_cidr }
+      gateway_ip: null
+      dns_nameservers: { get_param: nameservers }
+      allocation_pools:
+        - start: { get_param: network02_pool_start }
+          end: { get_param: network02_pool_end }
+  network03:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net03']] }
+      port_security_enabled: { get_param: network_port_security_enabled }
+  subnet03:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net03']] }
+      network: { get_resource: network03 }
+      cidr: { get_param: network03_cidr }
+      gateway_ip: null
+      dns_nameservers: { get_param: nameservers }
+      allocation_pools:
+        - start: { get_param: network03_pool_start }
+          end: { get_param: network03_pool_end }
+  network04:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net04']] }
+      port_security_enabled: { get_param: network_port_security_enabled }
+  subnet04:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net04']] }
+      network: { get_resource: network04 }
+      cidr: { get_param: network04_cidr }
+      gateway_ip: null
+      dns_nameservers: { get_param: nameservers }
+      allocation_pools:
+        - start: { get_param: network04_pool_start }
+          end: { get_param: network04_pool_end }
+  network05:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net05']] }
+      port_security_enabled: { get_param: network_port_security_enabled }
+  subnet05:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [get_param: stack_name, 'net05']] }
+      network: { get_resource: network05 }
+      cidr: { get_param: network05_cidr }
+      gateway_ip: null
+      dns_nameservers: { get_param: nameservers }
+      allocation_pools:
+        - start: { get_param: network05_pool_start }
+          end: { get_param: network05_pool_end }
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    condition: cond_network_port_security
+    properties:
+      name: { get_param: stack_name }
+      description: Security group
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: udp
+          remote_ip_prefix: 0.0.0.0/0
+        - protocol: icmp
+          remote_ip_prefix: 0.0.0.0/0
+outputs:
+  network:
+    value: { get_param: stack_name }
+  security_group:
+    condition: cond_network_port_security
+    value: { get_param: stack_name }
+
+  network01_subnet:
+    value: { get_resource: subnet01 }
+  network01_prefix:
+    value:
+      list_join:
+        - '.'
+        - - str_split: ['.', { get_param: network01_cidr }, 0]
+          - str_split: ['.', { get_param: network01_cidr }, 1]
+          - str_split: ['.', { get_param: network01_cidr }, 2]
+  network02_prefix:
+    value:
+      list_join:
+        - '.'
+        - - str_split: ['.', { get_param: network02_cidr }, 0]
+          - str_split: ['.', { get_param: network02_cidr }, 1]
+          - str_split: ['.', { get_param: network02_cidr }, 2]
+  network03_prefix:
+    value:
+      list_join:
+        - '.'
+        - - str_split: ['.', { get_param: network03_cidr }, 0]
+          - str_split: ['.', { get_param: network03_cidr }, 1]
+          - str_split: ['.', { get_param: network03_cidr }, 2]
+  network04_prefix:
+    value:
+      list_join:
+        - '.'
+        - - str_split: ['.', { get_param: network04_cidr }, 0]
+          - str_split: ['.', { get_param: network04_cidr }, 1]
+          - str_split: ['.', { get_param: network04_cidr }, 2]
+  network05_prefix:
+    value:
+      list_join:
+        - '.'
+        - - str_split: ['.', { get_param: network05_cidr }, 0]
+          - str_split: ['.', { get_param: network05_cidr }, 1]
+          - str_split: ['.', { get_param: network05_cidr }, 2]
