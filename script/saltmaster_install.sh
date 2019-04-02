@@ -11,7 +11,7 @@
 
 
 export BOOTSTRAP_SCRIPT_URL=$bootstrap_script_url
-export BOOTSTRAP_SCRIPT_URL=${BOOTSTRAP_SCRIPT_URL:-https://gerrit.mcp.mirantis.com/gitweb?p=salt-formulas/salt-formulas-scripts.git;a=blob_plain;f=bootstrap.sh;hb=refs/changes/36/38236/6}
+export BOOTSTRAP_SCRIPT_URL=${BOOTSTRAP_SCRIPT_URL:-https://gerrit.mcp.mirantis.com/gitweb?p=salt-formulas/salt-formulas-scripts.git;a=blob_plain;f=bootstrap.sh;hb=refs/changes/36/38236/7}
 
 # inherit heat variables
 export RECLASS_ADDRESS=$reclass_address
